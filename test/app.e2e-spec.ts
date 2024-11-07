@@ -3,9 +3,10 @@ import { Test } from '@nestjs/testing';
 import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
 import { AuthDto } from '../src/auth/dto';
+import { PrismaService } from '../src/prisma/prisma.service';
+import { CreateAppointmentDto } from 'src/appointment/dto';
 // import { PrismaService } from '../src/prisma/prisma.service';
 // import { CreateBookmarkDto, EditBookmarkDto } from '../src/bookmark/dto';
-import { PrismaService } from '../src/prisma/prisma.service';
 // import { EditUserDto } from '../src/user/dto';
 
 describe('App e2e', () => {
@@ -140,37 +141,37 @@ describe('App e2e', () => {
   //   });
   // });
 
-  // describe('Bookmarks', () => {
-  //   describe('Get empty bookmarks', () => {
-  //     it('should get bookmarks', () => {
-  //       return pactum
-  //         .spec()
-  //         .get('/bookmarks')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .expectStatus(200)
-  //         .expectBody([]);
-  //     });
-  //   });
+  describe('Appointments', () => {
+    describe('Get empty Appointments', () => {
+      it('should get Appointments', () => {
+        return pactum
+          .spec()
+          .get('/appointments')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+    });
 
-  //   describe('Create bookmark', () => {
-  //     const dto: CreateBookmarkDto = {
-  //       title: 'First Bookmark',
-  //       link: 'https://www.youtube.com/watch?v=d6WC5n9G_sM',
-  //     };
-  //     it('should create bookmark', () => {
-  //       return pactum
-  //         .spec()
-  //         .post('/bookmarks')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .withBody(dto)
-  //         .expectStatus(201)
-  //         .stores('bookmarkId', 'id');
-  //     });
-  //   });
+    describe('Create bookmark', () => {
+      const dto: CreateAppointmentDto = {
+        title: 'First Bookmark',
+        link: 'https://www.youtube.com/watch?v=d6WC5n9G_sM',
+      };
+      it('should create bookmark', () => {
+        return pactum
+          .spec()
+          .post('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .withBody(dto)
+          .expectStatus(201)
+          .stores('bookmarkId', 'id');
+      });
+    });
 
   //   describe('Get bookmarks', () => {
   //     it('should get bookmarks', () => {

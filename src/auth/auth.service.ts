@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 
 import * as argon from 'argon2';
@@ -28,6 +28,26 @@ export class AuthService {
           role: dto.role,
         },
       });
+
+      if (dto.role === 'DOCTOR') {
+        const doctor = await this.prisma.doctor.create({
+          data: { userId: user.id, specialization: '' },
+        });
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { doctorId: doctor.id },
+        });
+      } else if (dto.role === 'PATIENT') {
+        const patient = await this.prisma.patient.create({
+          data: { userId: user.id },
+        });
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { patientId: patient.id },
+        });
+      }
 
       return this.signToken(user.id, user.email);
     } catch (error) {
