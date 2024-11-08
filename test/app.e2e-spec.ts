@@ -12,6 +12,8 @@ import { CreateAppointmentDto } from 'src/appointment/dto';
 describe('App e2e', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let patientId: number;
+  let doctorId: number;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -30,9 +32,57 @@ describe('App e2e', () => {
     prisma = app.get(PrismaService);
     await prisma.cleanDb();
     pactum.request.setBaseUrl('http://localhost:3333');
+
+    const doctor = await prisma.doctor
+      .create({
+        data: {
+          specialization: 'General Practitioner',
+          user: {
+            create: {
+              email: 'doctor@example.com',
+              hash: 'hashedPassword',
+              firstName: 'John',
+              lastName: 'Doe',
+              role: 'DOCTOR',
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        console.error('Failed to create doctor:', error);
+        throw error;
+      });
+    doctorId = doctor.id;
+
+    const patient = await prisma.patient
+      .create({
+        data: {
+          user: {
+            create: {
+              email: 'patient@example.com',
+              hash: 'hashedPassword',
+              firstName: 'Jane',
+              lastName: 'Doe',
+              role: 'PATIENT',
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        console.error('Failed to create patient:', error);
+        throw error;
+      });
+
+    patientId = patient.id;
+
+    console.log('Doctor ID before:', doctorId);
+    console.log('Doctor ID type:', typeof doctorId);
+    console.log('Patient ID before:', patientId);
   });
 
   afterAll(async () => {
+    console.log('Doctor ID:', doctorId);
+    console.log('Patient ID:', patientId);
     await app.close();
   });
 
@@ -142,6 +192,13 @@ describe('App e2e', () => {
   // });
 
   describe('Appointments', () => {
+    const dto: CreateAppointmentDto = {
+      status: 'SCHEDULED',
+      appointmentDate: new Date(Date.now()),
+      patientId: patientId,
+      doctorId: doctorId,
+      reason: 'Regular check-up',
+    };
     describe('Get empty Appointments', () => {
       it('should get Appointments', () => {
         return pactum
@@ -155,95 +212,98 @@ describe('App e2e', () => {
       });
     });
 
-    describe('Create bookmark', () => {
-      const dto: CreateAppointmentDto = {
-        title: 'First Bookmark',
-        link: 'https://www.youtube.com/watch?v=d6WC5n9G_sM',
-      };
-      it('should create bookmark', () => {
-        return pactum
+    describe('Create appointment', () => {
+      it('should create appointment', async () => {
+        await pactum
           .spec()
-          .post('/bookmarks')
+          .post('/appointments')
           .withHeaders({
             Authorization: 'Bearer $S{userAt}',
           })
-          .withBody(dto)
+          .withBody({
+            status: 'SCHEDULED',
+            appointmentDate: new Date(),
+            patientId: patientId,
+            doctorId: doctorId,
+            reason: 'Regular check-up',
+          })
           .expectStatus(201)
-          .stores('bookmarkId', 'id');
+          .stores('appointmentId', 'id')
+          .inspect();
       });
     });
 
-  //   describe('Get bookmarks', () => {
-  //     it('should get bookmarks', () => {
-  //       return pactum
-  //         .spec()
-  //         .get('/bookmarks')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .expectStatus(200)
-  //         .expectJsonLength(1);
-  //     });
-  //   });
+    // describe('Get appointments', () => {
+    //   it('should get appointments', () => {
+    //     return pactum
+    //       .spec()
+    //       .get('/appointments')
+    //       .withHeaders({
+    //         Authorization: 'Bearer $S{userAt}',
+    //       })
+    //       .expectStatus(200)
+    //       .expectJsonLength(1);
+    //   });
+    // });
 
-  //   describe('Get bookmark by id', () => {
-  //     it('should get bookmark by id', () => {
-  //       return pactum
-  //         .spec()
-  //         .get('/bookmarks/{id}')
-  //         .withPathParams('id', '$S{bookmarkId}')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .expectStatus(200)
-  //         .expectBodyContains('$S{bookmarkId}'); //.expectJsonMatch({id: '$S{bookmarkId}'}) would have been the correct way of testing to prevent false positive matches with other numbers, user id etc.
-  //     });
-  //   });
+    //   describe('Get bookmark by id', () => {
+    //     it('should get bookmark by id', () => {
+    //       return pactum
+    //         .spec()
+    //         .get('/bookmarks/{id}')
+    //         .withPathParams('id', '$S{bookmarkId}')
+    //         .withHeaders({
+    //           Authorization: 'Bearer $S{userAt}',
+    //         })
+    //         .expectStatus(200)
+    //         .expectBodyContains('$S{bookmarkId}'); //.expectJsonMatch({id: '$S{bookmarkId}'}) would have been the correct way of testing to prevent false positive matches with other numbers, user id etc.
+    //     });
+    //   });
 
-  //   describe('Edit bookmark by id', () => {
-  //     const dto: EditBookmarkDto = {
-  //       title:
-  //         'Kubernetes Course - Full Beginners Tutorial (Containerize Your Apps!)',
-  //       description:
-  //         'Learn how to use Kubernetes in this complete course. Kubernetes makes it possible to containerize applications and simplifies app deployment to production.',
-  //     };
-  //     it('should edit bookmark', () => {
-  //       return pactum
-  //         .spec()
-  //         .patch('/bookmarks/{id}')
-  //         .withPathParams('id', '$S{bookmarkId}')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .withBody(dto)
-  //         .expectStatus(200)
-  //         .expectBodyContains(dto.title)
-  //         .expectBodyContains(dto.description);
-  //     });
-  //   });
+    //   describe('Edit bookmark by id', () => {
+    //     const dto: EditBookmarkDto = {
+    //       title:
+    //         'Kubernetes Course - Full Beginners Tutorial (Containerize Your Apps!)',
+    //       description:
+    //         'Learn how to use Kubernetes in this complete course. Kubernetes makes it possible to containerize applications and simplifies app deployment to production.',
+    //     };
+    //     it('should edit bookmark', () => {
+    //       return pactum
+    //         .spec()
+    //         .patch('/bookmarks/{id}')
+    //         .withPathParams('id', '$S{bookmarkId}')
+    //         .withHeaders({
+    //           Authorization: 'Bearer $S{userAt}',
+    //         })
+    //         .withBody(dto)
+    //         .expectStatus(200)
+    //         .expectBodyContains(dto.title)
+    //         .expectBodyContains(dto.description);
+    //     });
+    //   });
 
-  //   describe('Delete bookmark by id', () => {
-  //     it('should delete bookmark', () => {
-  //       return pactum
-  //         .spec()
-  //         .delete('/bookmarks/{id}')
-  //         .withPathParams('id', '$S{bookmarkId}')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .expectStatus(204);
-  //     });
+    //   describe('Delete bookmark by id', () => {
+    //     it('should delete bookmark', () => {
+    //       return pactum
+    //         .spec()
+    //         .delete('/bookmarks/{id}')
+    //         .withPathParams('id', '$S{bookmarkId}')
+    //         .withHeaders({
+    //           Authorization: 'Bearer $S{userAt}',
+    //         })
+    //         .expectStatus(204);
+    //     });
 
-  //     it('should get empty bookmarks', () => {
-  //       return pactum
-  //         .spec()
-  //         .get('/bookmarks')
-  //         .withHeaders({
-  //           Authorization: 'Bearer $S{userAt}',
-  //         })
-  //         .expectStatus(200)
-  //         .expectJsonLength(0);
-  //     });
-  //   });
-  // });
+    //     it('should get empty bookmarks', () => {
+    //       return pactum
+    //         .spec()
+    //         .get('/bookmarks')
+    //         .withHeaders({
+    //           Authorization: 'Bearer $S{userAt}',
+    //         })
+    //         .expectStatus(200)
+    //         .expectJsonLength(0);
+    //     });
+    //   });
+  });
 });

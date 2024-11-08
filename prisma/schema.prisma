@@ -50,7 +50,7 @@ model Appointment {
   patient Patient @relation(fields: [patientId], references: [id])
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
 
-  status          Status   @default(SCHEDULED)
+  status          Status
   appointmentDate DateTime
 
   patientId Int
@@ -65,6 +65,7 @@ enum Status {
   SCHEDULED
   COMPLETED
   CANCELLED
+  RESCHEDULED
 }
 
 enum Role {

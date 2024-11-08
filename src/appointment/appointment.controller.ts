@@ -15,13 +15,16 @@ import { GetUser } from '../auth/decorator/get-user.decorator';
 import { AppointmentService } from './appointment.service';
 
 @UseGuards(JwtGuard)
-@Controller('appointment')
+@Controller('appointments')
 export class AppointmentController {
   constructor(private appointmentService: AppointmentService) {}
 
   @Get()
-  getAppointments(@GetUser('id') userId: number) {
-    return this.appointmentService.getAppointments(userId);
+  getAppointments(
+    @GetUser('id') userId: number,
+    @Param() role: 'DOCTOR' | 'PATIENT',
+  ) {
+    return this.appointmentService.getAppointments(userId, role);
   }
 
   @Get('id')
@@ -33,11 +36,8 @@ export class AppointmentController {
   }
 
   @Post()
-  createAppointment(
-    @GetUser('id') userId: number,
-    @Body() dto: CreateAppointmentDto,
-  ) {
-    return this.appointmentService.createAppointment(userId, dto);
+  createAppointment(@Body() dto: CreateAppointmentDto) {
+    return this.appointmentService.createAppointment(dto);
   }
 
   @Patch('id')

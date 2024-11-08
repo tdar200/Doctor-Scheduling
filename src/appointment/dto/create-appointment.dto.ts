@@ -4,6 +4,7 @@ import {
   IsDate,
   IsOptional,
   IsInt,
+  IsEnum,
 } from 'class-validator';
 
 export class CreateAppointmentDto {
@@ -11,7 +12,6 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
 
-  @IsDate()
   @IsNotEmpty()
   appointmentDate: Date;
 
